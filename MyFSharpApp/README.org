@@ -1,0 +1,6 @@
+* README
+** How to build and run
+#+begin_src shell
+  dotnet build
+  dotnet run
+#+end_src
