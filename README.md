@@ -12,9 +12,20 @@ winget install dotnet-sdk-9
 winget upgrade
 ```
 
+### In macOS
+
+- https://dotnet.microsoft.com/en-us/download/dotnet/
+
+```zsh
+brew install mono-libgdiplus wget
+wget https://dot.net/v1/dotnet-install.sh
+chmod +x dotnet-install.sh
+./dotnet-install.sh
+```
+
 ### In Ubuntu 24.10
 
-```pwsh
+```bash
 sudo apt install -y ca-certificates \
   libc6 \
   libgcc-s1 \
