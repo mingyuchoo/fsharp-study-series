@@ -11,5 +11,59 @@
 #+begin_src shell
   dotnet run
 #+end_src
+** How to make a package for macOS
+Build the project for the target
+#+begin_src shell
+  dotnet publish -r osx-arm64 -c Release --self-contained
+#+end_src
+Prepare bundle for macOS
+#+begin_src shell
+  mkdir -p {ProjectName}.app/Contents/MacOS
+  mkdir -p {ProjectName}.app/Contents/Resources
+  cp -r {ProjectName}/bin/Release/net9.0/osx-arm64/* {ProjectName}.app/Contents/MacOS
+#+end_src
+Create ~{ProjectName}.app/Contents/Info.plist~ file
+#+begin_src xml
+  <?xml version="1.0" encoding="UTF-8"?>
+  <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+  <plist version="1.0">
+  <dict>
+      <key>CFBundleName</key>
+      <string>{ProjectName}</string>
+      <key>CFBundleDisplayName</key>
+      <string>{ProjectName}</string>
+      <key>CFBundleExecutable</key>
+      <string>{ProjectName}</string>
+      <key>CFBundleIdentifier</key>
+      <string>com.example.myapp</string>
+      <key>CFBundleVersion</key>
+      <string>1.0</string>
+      <key>CFBundlePackageType</key>
+      <string>APPL</string>
+  </dict>
+  </plist>
+#+end_src
+Make file executable
+#+begin_src shell
+  chmod +x {ProjectName}.app/Contents/MacOS/{ProjectName}
+#+end_src
+Execute the application
+#+begin_src shell
+  open {ProjectName}.app
+#+end_src
+** How to make DMG for macOS
+#+begin_src shell
+  brew install create-dmg
+  create-dmg \
+  --volname "{ProjectName}" \
+  --window-pos 200 120 \
+  --window-size 500 300 \
+  --icon-size 100 \
+  --icon "{ProjectName}.app" 125 125 \
+  --hide-extension "{ProjectName}.app" \
+  --app-drop-link 375 125 \
+  "{ProjectName}.dmg" \
+  "{ProjectName}.app"
+#+end_src
 ** References
 - [[https://funcui.avaloniaui.net][FuncUI]]
