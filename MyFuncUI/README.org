@@ -1,0 +1,15 @@
+* README
+** How to create a project
+#+begin_src shell
+  dotnet net console -lang F# -o {ProjectName}
+  cd {ProjectName}
+  dotnet add package Avalonia.Desktop
+  dotnet add package Avalonia.Themes.Fluent
+  dotnet add package Avalonia.FuncUI
+#+end_src
+** How to run this project
+#+begin_src shell
+  dotnet run
+#+end_src
+** References
+- [[https://funcui.avaloniaui.net][FuncUI]]
