@@ -35,7 +35,7 @@
   "MaxElmishWidth": 40,
   "SingleArgumentWebMode": false,
   "DisableElmishSyntax": false,
-  "ExperimentalStroustrupStyle": false,
+  "ExperimentalStroustrupStyle": true,
   "ExperimentalKeepIndentInBranch": false,
   "BlankLineBeforeClassDeclarations": false,
   "BlankLineBeforeMultilineTypeDefMembers": false,
