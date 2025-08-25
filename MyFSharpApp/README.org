@@ -4,3 +4,9 @@
   dotnet build
   dotnet run
 #+END_SRC
+** Format
+#+BEGIN_SRC bash
+dotnet tool install -g fantomas
+cd FSharpWebService
+fantomas .
+#+END_SRC

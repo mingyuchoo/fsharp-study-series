@@ -7,6 +7,12 @@
   dotnet add package Avalonia.Themes.Fluent
   dotnet add package Avalonia.FuncUI
 #+END_SRC
+** Format
+#+BEGIN_SRC bash
+dotnet tool install -g fantomas
+cd FSharpWebService
+fantomas .
+#+END_SRC
 ** How to run this project
 #+BEGIN_SRC shell
   dotnet run

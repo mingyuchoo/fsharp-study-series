@@ -1,0 +1,12 @@
+* text=auto eol=lf
+
+*.fs text eol=lf
+*.fsx text eol=lf  
+*.fsi text eol=lf
+
+# 바이너리 파일들
+*.dll binary
+*.exe binary
+*.png binary
+*.jpg binary
+*.gif binary
