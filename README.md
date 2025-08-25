@@ -42,15 +42,28 @@ sudo apt install -y dotnet-runtime-9.0 # or aspnetcore-runtime-9.0
 
 ## Create a project
 
+### Console project
+
 ```pwsh
-dotnet new console -lang F# -o MyFSharpApp
+dotnet new console -lang F# -o MyFSharpConsoleApp
+cd MyFSharpConsoleApp
+dotnet run
 ```
+
+### Web project
+
+```pwsh
+dotnet new web -lang F# -o MyFSharpWebApp
+cd MyFSharpWebApp
+dotnet add package Microsoft.AspNetCore.OpenApi
+dotnet add package Swashbuckle.AspNetCore
+dotnet run
+```
+Connect to `http://localhost:5050`
 
 ## How to run the project
 
 ```pwsh
-cd MyFSharpApp
-dotnet run
 ```
 
 
