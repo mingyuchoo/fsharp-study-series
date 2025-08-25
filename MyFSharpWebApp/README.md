@@ -4,14 +4,14 @@ F#(.NET 9)로 구현한 ASP.NET Core Minimal API 예제입니다. `Products` 도
 
 ## 프로젝트 생성 및 실행 방법
 
-## 1. 프로젝트 생성
+### 프로젝트 생성
 
 ```bash
 dotnet new web -lang F# -n FSharpWebService
 cd FSharpWebService
 ```
 
-## 2. 패키지 추가
+### 패키지 추가
 
 이 저장소에는 필요한 패키지가 이미 포함되어 있습니다(`MyFSharpWebApp.fsproj`). 참고용 버전 정보:
 
@@ -25,17 +25,25 @@ dotnet add package Microsoft.AspNetCore.OpenApi
 dotnet add package Swashbuckle.AspNetCore
 ```
 
-## 3. 실행
+### 실행
 
 ```bash
 dotnet run
 ```
 
-## 4. 최적화 빌드 및 실행
+### 최적화 빌드 및 실행
 
 ```bash
 dotnet build -c Release
 dotnet run -c Release
+```
+
+### 포맷팅
+
+```bash
+dotnet tool install -g fantomas
+cd FSharpWebService
+fantomas .
 ```
 
 ## 주요 특징
