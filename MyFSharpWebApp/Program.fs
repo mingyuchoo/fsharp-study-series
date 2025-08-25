@@ -78,7 +78,8 @@ module ProductService =
         cmd.CommandText <- "SELECT Id, Name, Price, Category FROM Products ORDER BY Id;"
         use reader = cmd.ExecuteReader()
         let rec loop acc =
-            if reader.Read() then
+            match reader.Read() with
+            | true ->
                 let p = {
                     Id = reader.GetInt32(0)
                     Name = reader.GetString(1)
@@ -86,7 +87,8 @@ module ProductService =
                     Category = reader.GetString(3)
                 }
                 loop (p :: acc)
-            else List.rev acc
+            | false ->
+                List.rev acc
         loop []
     
     let getProductById id = 
@@ -95,14 +97,15 @@ module ProductService =
         cmd.CommandText <- "SELECT Id, Name, Price, Category FROM Products WHERE Id = $id;"
         cmd.Parameters.AddWithValue("$id", id) |> ignore
         use reader = cmd.ExecuteReader()
-        if reader.Read() then
+        match reader.Read() with
+        | true ->
             Some {
                 Id = reader.GetInt32(0)
                 Name = reader.GetString(1)
                 Price = decimal (reader.GetDouble(2))
                 Category = reader.GetString(3)
             }
-        else None
+        | false -> None
     
     let createProduct (request: CreateProductRequest) =
         use conn = Db.getConnection()
@@ -270,7 +273,10 @@ let main args =
     
     // SQLite 연결 문자열 설정 및 DB 초기화
     let cs = builder.Configuration.GetConnectionString("Default")
-    Db.connStr <- (if isNull cs then "Data Source=app.db" else cs)
+    Db.connStr <-
+        match isNull cs with
+        | true -> "Data Source=app.db"
+        | false -> cs
     let app = builder.Build()
     Db.init()
     configureApp app
