@@ -2,10 +2,13 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
+open Microsoft.Extensions.Configuration
 open System.Text.Json
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.OpenApi
 open Microsoft.OpenApi.Models
+open Microsoft.Data.Sqlite
+open System
 
 ///////////////////////////////////////////////////////////////////////////////
 // 도메인 모델
@@ -23,54 +26,125 @@ type CreateProductRequest = {
     Category: string
 }
 ///////////////////////////////////////////////////////////////////////////////
-// 인메모리 데이터 저장소
+// 데이터베이스 (SQLite)
 ///////////////////////////////////////////////////////////////////////////////
-let mutable products = [
-    { Id = 1; Name = "노트북"; Price = 1200000m; Category = "전자제품" }
-    { Id = 2; Name = "마우스"; Price = 50000m; Category = "전자제품" }
-    { Id = 3; Name = "키보드"; Price = 120000m; Category = "전자제품" }
-]
+module Db =
+    let mutable connStr : string = ""
 
-let mutable nextId = 4
+    let getConnection () =
+        let conn = new SqliteConnection(connStr)
+        conn.Open()
+        conn
+
+    let init () =
+        use conn = getConnection()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <-
+            """
+            CREATE TABLE IF NOT EXISTS Products (
+                Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                Name TEXT NOT NULL,
+                Price REAL NOT NULL,
+                Category TEXT NOT NULL
+            );
+            """
+        cmd.ExecuteNonQuery() |> ignore
+
+        // 시드 데이터: 없을 때만 삽입
+        use checkCmd = conn.CreateCommand()
+        checkCmd.CommandText <- "SELECT COUNT(1) FROM Products;"
+        let count = checkCmd.ExecuteScalar() :?> int64
+        match count with
+        | 0L ->
+            let seed (name: string, price: decimal, category: string) =
+                use c = conn.CreateCommand()
+                c.CommandText <- "INSERT INTO Products (Name, Price, Category) VALUES ($n, $p, $c);"
+                c.Parameters.AddWithValue("$n", name) |> ignore
+                c.Parameters.AddWithValue("$p", float price) |> ignore
+                c.Parameters.AddWithValue("$c", category) |> ignore
+                c.ExecuteNonQuery() |> ignore
+            [ ("노트북", 1200000m, "전자제품")
+              ("마우스", 50000m, "전자제품")
+              ("키보드", 120000m, "전자제품") ]
+            |> List.iter seed
+        | _ -> ()
 ///////////////////////////////////////////////////////////////////////////////
 // 비즈니스 로직
 ///////////////////////////////////////////////////////////////////////////////
 module ProductService =
-    let getAllProducts () = products
+    let getAllProducts () =
+        use conn = Db.getConnection()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <- "SELECT Id, Name, Price, Category FROM Products ORDER BY Id;"
+        use reader = cmd.ExecuteReader()
+        let rec loop acc =
+            if reader.Read() then
+                let p = {
+                    Id = reader.GetInt32(0)
+                    Name = reader.GetString(1)
+                    Price = decimal (reader.GetDouble(2))
+                    Category = reader.GetString(3)
+                }
+                loop (p :: acc)
+            else List.rev acc
+        loop []
     
     let getProductById id = 
-        products |> List.tryFind (fun p -> p.Id = id)
+        use conn = Db.getConnection()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <- "SELECT Id, Name, Price, Category FROM Products WHERE Id = $id;"
+        cmd.Parameters.AddWithValue("$id", id) |> ignore
+        use reader = cmd.ExecuteReader()
+        if reader.Read() then
+            Some {
+                Id = reader.GetInt32(0)
+                Name = reader.GetString(1)
+                Price = decimal (reader.GetDouble(2))
+                Category = reader.GetString(3)
+            }
+        else None
     
     let createProduct (request: CreateProductRequest) =
-        let newProduct = {
-            Id = nextId
+        use conn = Db.getConnection()
+        use tx = conn.BeginTransaction()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <- "INSERT INTO Products (Name, Price, Category) VALUES ($n, $p, $c);"
+        cmd.Parameters.AddWithValue("$n", request.Name) |> ignore
+        cmd.Parameters.AddWithValue("$p", float request.Price) |> ignore
+        cmd.Parameters.AddWithValue("$c", request.Category) |> ignore
+        cmd.ExecuteNonQuery() |> ignore
+
+        use idCmd = conn.CreateCommand()
+        idCmd.CommandText <- "SELECT last_insert_rowid();"
+        let newId = idCmd.ExecuteScalar() :?> int64 |> int
+        tx.Commit()
+        {
+            Id = newId
             Name = request.Name
             Price = request.Price
             Category = request.Category
         }
-        nextId <- nextId + 1
-        products <- newProduct :: products
-        newProduct
     
     let updateProduct id (request: CreateProductRequest) =
-        match products |> List.tryFind (fun p -> p.Id = id) with
-        | Some _ ->
-            let updatedProduct = {
-                Id = id
-                Name = request.Name
-                Price = request.Price
-                Category = request.Category
-            }
-            products <- products |> List.map (fun p -> if p.Id = id then updatedProduct else p)
-            Some updatedProduct
-        | None -> None
+        use conn = Db.getConnection()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <- "UPDATE Products SET Name = $n, Price = $p, Category = $c WHERE Id = $id;"
+        cmd.Parameters.AddWithValue("$n", request.Name) |> ignore
+        cmd.Parameters.AddWithValue("$p", float request.Price) |> ignore
+        cmd.Parameters.AddWithValue("$c", request.Category) |> ignore
+        cmd.Parameters.AddWithValue("$id", id) |> ignore
+        let changed = cmd.ExecuteNonQuery()
+        match changed with
+        | x when x > 0 -> Some { Id = id; Name = request.Name; Price = request.Price; Category = request.Category }
+        | _ -> None
     
     let deleteProduct id =
-        match products |> List.tryFind (fun p -> p.Id = id) with
-        | Some product ->
-            products <- products |> List.filter (fun p -> p.Id <> id)
-            true
-        | None -> false
+        use conn = Db.getConnection()
+        use cmd = conn.CreateCommand()
+        cmd.CommandText <- "DELETE FROM Products WHERE Id = $id;"
+        cmd.Parameters.AddWithValue("$id", id) |> ignore
+        let changed = cmd.ExecuteNonQuery()
+        changed > 0
 
 ///////////////////////////////////////////////////////////////////////////////
 // API 엔드포인트 정의
@@ -166,7 +240,7 @@ let configureApp (app: WebApplication) =
         |> ignore
 
     app
-        .MapPut("/api/products/{id:int}", System.Func<int, CreateProductRequest, IResult>(ApiEndpoints.updateProduct))
+        .MapPut("/api/products/{id:int}", System.Func<int, CreateProductRequest, IResult>(fun id req -> ApiEndpoints.updateProduct id req))
         .WithTags("Products")
         .WithOpenApi(fun o ->
             o.Summary <- "제품 수정"
@@ -183,7 +257,7 @@ let configureApp (app: WebApplication) =
             o)
         |> ignore
     
-    app
+    ()
 
 ///////////////////////////////////////////////////////////////////////////////
 // 메인 함수
@@ -194,7 +268,11 @@ let main args =
     
     configureServices builder.Services
     
+    // SQLite 연결 문자열 설정 및 DB 초기화
+    let cs = builder.Configuration.GetConnectionString("Default")
+    Db.connStr <- (if isNull cs then "Data Source=app.db" else cs)
     let app = builder.Build()
+    Db.init()
     configureApp app
     
     app.Run()
