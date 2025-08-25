@@ -91,31 +91,28 @@ module ApiEndpoints =
     
     // POST /api/products
     let createProduct (request: CreateProductRequest) : IResult =
-        if System.String.IsNullOrWhiteSpace(request.Name) then
-            Results.BadRequest("제품명은 필수입니다.")
-        elif request.Price <= 0m then
-            Results.BadRequest("가격은 0보다 커야 합니다.")
-        else
+        match System.String.IsNullOrWhiteSpace request.Name, request.Price <= 0m with
+        | true, _ -> Results.BadRequest("제품명은 필수입니다.")
+        | _, true -> Results.BadRequest("가격은 0보다 커야 합니다.")
+        | _ ->
             let newProduct = ProductService.createProduct request
             Results.Created($"/api/products/{newProduct.Id}", newProduct)
     
     // PUT /api/products/{id}
     let updateProduct (id: int) (request: CreateProductRequest) : IResult =
-        if System.String.IsNullOrWhiteSpace(request.Name) then
-            Results.BadRequest("제품명은 필수입니다.")
-        elif request.Price <= 0m then
-            Results.BadRequest("가격은 0보다 커야 합니다.")
-        else
+        match System.String.IsNullOrWhiteSpace request.Name, request.Price <= 0m with
+        | true, _ -> Results.BadRequest("제품명은 필수입니다.")
+        | _, true -> Results.BadRequest("가격은 0보다 커야 합니다.")
+        | _ ->
             match ProductService.updateProduct id request with
             | Some updatedProduct -> Results.Ok(updatedProduct)
             | None -> Results.NotFound($"제품 ID {id}를 찾을 수 없습니다.")
     
     // DELETE /api/products/{id}
     let deleteProduct (id: int) : IResult =
-        if ProductService.deleteProduct id then
-            Results.NoContent()
-        else
-            Results.NotFound($"제품 ID {id}를 찾을 수 없습니다.")
+        match ProductService.deleteProduct id with
+        | true -> Results.NoContent()
+        | false -> Results.NotFound($"제품 ID {id}를 찾을 수 없습니다.")
 
 ///////////////////////////////////////////////////////////////////////////////
 // 애플리케이션 설정
@@ -132,9 +129,11 @@ let configureServices (services: IServiceCollection) =
     ) |> ignore
 
 let configureApp (app: WebApplication) =
-    if app.Environment.IsDevelopment() then
+    match app.Environment.IsDevelopment() with
+    | true ->
         app.UseSwagger() |> ignore
         app.UseSwaggerUI() |> ignore
+    | false -> ()
     
     app.UseHttpsRedirection() |> ignore
     
