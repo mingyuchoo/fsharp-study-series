@@ -1,11 +1,11 @@
 root = true
 
 [*.{fs,fsi,fsx}]
-fsharp_space_before_parameter = false
-fsharp_space_before_lowercase_invocation = false
-fsharp_space_before_uppercase_invocation = false
-fsharp_space_before_class_constructor = false
-fsharp_space_before_member = false
+fsharp_space_before_parameter = true
+fsharp_space_before_lowercase_invocation = true
+fsharp_space_before_uppercase_invocation = true
+fsharp_space_before_class_constructor = true
+fsharp_space_before_member = true
 fsharp_space_before_colon = true
 fsharp_space_before_semicolon = true
 fsharp_space_after_semicolon = true
