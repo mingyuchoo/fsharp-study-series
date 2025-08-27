@@ -1,0 +1,31 @@
+root = true
+
+[*.{fs,fsi,fsx}]
+fsharp_space_before_parameter = true
+fsharp_space_before_lowercase_invocation = true
+fsharp_space_before_uppercase_invocation = true
+fsharp_space_before_class_constructor = true
+fsharp_space_before_member = true
+fsharp_space_before_colon = true
+fsharp_space_before_semicolon = true
+fsharp_space_after_semicolon = true
+fsharp_space_around_delimiter = true
+fsharp_max_record_width = 20
+fsharp_max_record_number_of_items = 1
+fsharp_multiline_bracket_style = stroustrup
+fsharp_newline_between_type_definition_and_members = true
+fsharp_align_function_signature_to_indentation = true
+fsharp_alternative_long_member_definitions = true
+fsharp_multi_line_lambda_closing_newline = true
+fsharp_experimental_keep_indent_in_branch = true
+fsharp_bar_before_discriminated_union_declaration = true
+fsharp_blank_lines_around_nested_multiline_expressions = true
+fsharp_blank_line_before_class_declarations = true
+fsharp_blank_line_before_multiline_type_def_members = true
+charset = utf-8
+end_of_line = lf
+indent_final_newline = true
+indent_size = 4
+indent_style = space
+max_line_length = 120
+trim_trailing_whitespace = true
