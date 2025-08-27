@@ -1,7 +1,7 @@
 * README
 ** How to create a project
 #+BEGIN_SRC shell
-  dotnet net console -lang F# -o {ProjectName}
+  dotnet new console -lang F# -o {ProjectName}
   cd {ProjectName}
   dotnet add package Avalonia.Desktop
   dotnet add package Avalonia.Themes.Fluent
